@@ -8,6 +8,12 @@ import board.board.entity.Guestbook;
 public interface GuestbookService {
     Long register(GuestbookDTO dto);
 
+    GuestbookDTO read(Long gno);
+
+    void remove(Long gno);
+
+    void modify(GuestbookDTO dto);
+
     PageResultDTO<GuestbookDTO, Guestbook> getList(PageRequestDTO requestDTO);
 
     default Guestbook dtoToEntity(GuestbookDTO dto) {
