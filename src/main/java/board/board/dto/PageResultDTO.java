@@ -47,8 +47,6 @@ public class PageResultDTO<DTO, EN> {
 
         pageList = IntStream.rangeClosed(start, end).boxed().collect(Collectors.toList());
     }
-
-
 }
 // 리포지토리 -> 서비스 계층으로 전달 시 사용
 // 지네릭으로 선언하여 확장성을 높임. 어떤 종류의 Page<EN>이 생성되더라도 이 클래스를 통해 처리할 수 있음

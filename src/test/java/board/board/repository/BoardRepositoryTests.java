@@ -80,4 +80,23 @@ public class BoardRepositoryTests {
 
         System.out.println(Arrays.toString(arr));
     }
+
+    @Test
+    public void testSearch1() {
+        boardRepository.search1();
+    }
+
+    @Test
+    public void testSearchPage() {
+        PageRequest pageable = PageRequest.of(0, 10, Sort.by("bno").descending());
+
+        Page<Object[]> result = boardRepository.searchPage("t", "1", pageable); // 제목에 1이 포함된 데이터 검색
+    }
+
+    @Test
+    public void testSearchPage() {
+        PageRequest pageable = PageRequest.of(0, 10, Sort.by("bno").descending().and(Sort.by("title").ascending()));
+
+        Page<Object[]> result = boardRepository.searchPage("t", "1", pageable);
+    }
 }
