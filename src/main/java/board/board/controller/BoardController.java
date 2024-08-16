@@ -43,8 +43,8 @@ public class BoardController {
         return "redirect:/board/list";
     }
 
-    @GetMapping({"/read", "modify"})
-    public void read(@ModelAttribute("requestDTO") PageRequestDTO requestDTO, Long bno, Model model) {
+    @GetMapping({"/read", "/modify"})
+    public void read(@RequestParam("bno") Long bno, @ModelAttribute("requestDTO") PageRequestDTO requestDTO, Model model) {
         log.info("bno: " + bno);
 
         BoardDTO boardDTO = boardService.get(bno);
@@ -66,7 +66,7 @@ public class BoardController {
     }
 
     @PostMapping("/modify")
-    public String modify(BoardDTO dto, @ModelAttribute("requestDTO") PageRequestDTO requestDTO, RedirectAttributes redirectAttributes) {
+    public String modify(@ModelAttribute BoardDTO dto, @ModelAttribute("requestDTO") PageRequestDTO requestDTO, RedirectAttributes redirectAttributes) {
         log.info("post modify....................");
         log.info("dto: " + dto);
 

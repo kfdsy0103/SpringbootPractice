@@ -43,7 +43,7 @@ public class BoardServiceImpl implements BoardService {
         Function<Object[], BoardDTO> fn = (en -> entityToDto((Board)en[0], (Member)en[1], (Long)en[2]));
 
 //        Page<Object[]> result = repository.getBoardWithReplyCount(pageRequestDTO.getPageable(Sort.by("bno").descending())); 
-        repository.searchPage(pageRequestDTO.getType(), pageRequestDTO.getKeyword(), pageRequestDTO.getPageable(Sort.by("bno").descending())); // Querydsl 로 동적 쿼리 생성
+        Page<Object[]> result = repository.searchPage(pageRequestDTO.getType(), pageRequestDTO.getKeyword(), pageRequestDTO.getPageable(Sort.by("bno").descending()));// Querydsl 로 동적 쿼리 생성
 
         return new PageResultDTO<>(result, fn);
     }
@@ -68,11 +68,13 @@ public class BoardServiceImpl implements BoardService {
     @Override
     public void modify(BoardDTO boardDTO) {
         Optional<Board> result = repository.findById(boardDTO.getBno());
+        // modify 메서드가 트랜잭션 범위 내라면 repository.save() 를 호출하지 않아도 더티체킹으로 업데이트된다.
 
         if(result.isPresent()) {
             Board board = result.get();
             board.changeTitle(boardDTO.getTitle());
             board.changeContent(boardDTO.getContent());
+            repository.save(board);
         }
     }
 }
