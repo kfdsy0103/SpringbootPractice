@@ -80,8 +80,7 @@
                         <p>Modal body text goes here.</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary">Save changes</button>
+                        <button type="button" class="btn btn-secondary btn-close" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
@@ -91,7 +90,7 @@
             var msg = [[${msg}]];
             console.log(msg);
             if(msg) {
-                $(".modal").modal();
+                $(".modal").modal('show');
             }
 
             var searchForm = $("#searchForm");
@@ -102,6 +101,11 @@
             $('.btn-clear').click(function(e){
                 searchForm.empty().submit();
             });
+
+            $('.btn-close').click(function() {
+                $(".modal").modal('hide');
+            });
+
         </script>
 
     </th:block>

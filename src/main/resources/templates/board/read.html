@@ -61,7 +61,7 @@
                     </div>
                     <div class="modal-body">
                         <div class="form-group">
-                            <input class="form-control" type="text" name="replyText" placeholder="Reply Text...">
+                            <input class="form-control" type="text" name="text" placeholder="Reply Text...">
                         </div>
                         <div class="form-group">
                             <input class="form-control" type="text" name="replyer" placeholder="Replyer">
@@ -119,9 +119,9 @@
             var modal = $('.modal');
 
             $(".addReply").click(function(){
-                modal.modal();
+                modal.modal('show');
 
-                $('input[name="replyText"]').val('');
+                $('input[name="text"]').val('');
                 $('input[name="replyer"]').val('');
 
                 $(".modal-footer .btn").hide();
@@ -131,17 +131,93 @@
             $(".replySave").click(function() {
                 var reply = {
                     bno: bno,
-                    text: $('.input[name="replyText"]').val(),
+                    text: $('input[name="text"]').val(),
                     replyer: $('input[name="replyer"]').val()
                 }
+
                 console.log(reply);
 
                 $.ajax({
-                    url
+                    url: '/replies',
+                    method: 'post',
+                    data: JSON.stringify(reply), // reply 객체를 json 문자열로 바꾸어 전송
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    success: function(data) {
+                        console.log(data);
 
+                        var newRno = parseInt(data);
 
+                        alert(newRno + "번 댓글이 등록되었습니다.");
+                        modal.modal('hide');
+                        loadJSONData();
+                    }
+                });
+            });
+
+             $(".replyClose").click(function() {
+                modal.modal('hide');
+            });
+
+            $(".replyList").on('click', '.card-body', function() {
+                var rno = $(this).data("rno"); // data-rno 속성 값 가져오기
+
+                $("input[name='text']").val($(this).find('.card-title').html());
+                $("input[name='replyer']").val($(this).find('.card-subtitle').html());
+                $("input[name='rno']").val(rno);
+
+                $(".modal-footer .btn").hide();
+                $(".replyRemove, .replyModify, .replyClose").show();
+
+                modal.modal('show');
+            });
+
+            $(".replyRemove").on("click", function() {
+                var rno = $("input[name='rno']").val();
+
+                $.ajax({
+                    url: '/replies/' + rno,
+                    method: 'delete',
+                    success: function(result) {
+                        console.log("result: " + result);
+                        if(result === 'success') {
+                            alert('댓글이 삭제되었습니다.');
+                            modal.modal('hide');
+                            loadJSONData();
+                        }
+                    }
+                });
+            });
+
+            $(".replyModify").click(function() {
+                var rno = $("input[name='rno']").val();
+
+                var reply = {
+                    rno: rno,
+                    bno: bno,
+                    text: $('input[name="text"]').val(),
+                    replyer: $('input[name="replyer"]').val()
+                }
+
+                console.log(reply);
+
+                $.ajax({
+                    url: '/replies/' + rno,
+                    method: 'put',
+                    data: JSON.stringify(reply),
+                    contentType: 'application/json; charset=utf-8',
+                    success: function(result) {
+                        console.log("RESULT: " + result);
+
+                        if(result === 'success') {
+                            alert("수정되었습니다.");
+                            modal.modal('hide');
+                            loadJSONData();
+                        }
+                    }
+                });
+            });
         </script>
-
     </th:block>
 </th:block>
 </html>
