@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{/layout/basic :: setContent(~{this::content})}">
+
+    <th:block th:fragment="content">
+        <h1 class="mt-4">Movie Read Page</h1>
+
+        <div class="form-group">
+            <label>Title</label>
+            <input type="text" class="form-control" name="title" th:value="${dto.title}" readonly>
+        </div>
+        <div class="form-group>">
+            <label>Review Count</label>
+            <input type="text" class="form-control" name="reviewCnt" th:value="${dto.reviewCnt}" readonly>
+        </div>
+        <div class="form-group>">
+            <label>Avg</label>
+            <input type="text" class="form-control" name="avg" th:value="${dto.avg}" readonly>
+        </div>
+
+        <div class="uploadResult">
+            <ul>
+                <li th:each="movieImage: ${dto.imageDTOList}">
+                    <img th:if="${movieImage.path != null}" th:src="|/display/fileName=${movieImage.getThumbnailURL()}|">
+                </li>
+            </ul>
+        </div>
+
+        <button type="button" class="btn btn-primary">
+            Review Count <span class="badge badge-light">[[${dto.reviewCnt}]]</span>
+        </button>
+
+        <script th:inline="javascript">
+            $(document).ready(function(){
+                $(".replyCount").click(function(){
+                    loadJSONData();
+                });
+            });
+
+            var bno = [[${dto.bno}]];
+            var listGroup = $(".replyList");
+
+            function formatTime(str) {
+                var date = new Date(str);
+
+                return date.getFullYear() + '/' + (date.getMonth() + 1) + '/' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes();
+            }
+
+            function loadJSONData() {
+
+                $.getJSON('/replies/board/'+bno, function(arr){
+                    console.log(arr);
+
+                    var str = "";
+
+                    $(".replyCount").html("Reply Count  " + arr.length);
+
+                    $.each(arr, function(idx, reply){
+                        console.log(reply);
+                        str += '<div class="card-body" data-rno="' + reply.rno + '"><b>' + reply.rno + '</b>';
+                        str += '    <h5 class="card-title">' + reply.text + '</h5>';
+                        str += '    <h6 class="card-subtitle mb-2 text-muted">' + reply.replyer + '<h6>';
+                        str += '    <p class="card-text">' + formatTime(reply.regDate) + '</p>';
+                        str += '</div>';
+                    });
+
+                    listGroup.html(str);
+                });
+            }
+
+            var modal = $('.modal');
+
+            $(".addReply").click(function(){
+                modal.modal('show');
+
+                $('input[name="text"]').val('');
+                $('input[name="replyer"]').val('');
+
+                $(".modal-footer .btn").hide();
+                $(".replySave, .replyClose").show();
+            });
+
+            $(".replySave").click(function() {
+                var reply = {
+                    bno: bno,
+                    text: $('input[name="text"]').val(),
+                    replyer: $('input[name="replyer"]').val()
+                }
+
+                console.log(reply);
+
+                $.ajax({
+                    url: '/replies',
+                    method: 'post',
+                    data: JSON.stringify(reply), // reply 객체를 json 문자열로 바꾸어 전송
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    success: function(data) {
+                        console.log(data);
+
+                        var newRno = parseInt(data);
+
+                        alert(newRno + "번 댓글이 등록되었습니다.");
+                        modal.modal('hide');
+                        loadJSONData();
+                    }
+                });
+            });
+
+             $(".replyClose").click(function() {
+                modal.modal('hide');
+            });
+
+            $(".replyList").on('click', '.card-body', function() {
+                var rno = $(this).data("rno"); // data-rno 속성 값 가져오기
+
+                $("input[name='text']").val($(this).find('.card-title').html());
+                $("input[name='replyer']").val($(this).find('.card-subtitle').html());
+                $("input[name='rno']").val(rno);
+
+                $(".modal-footer .btn").hide();
+                $(".replyRemove, .replyModify, .replyClose").show();
+
+                modal.modal('show');
+            });
+
+            $(".replyRemove").on("click", function() {
+                var rno = $("input[name='rno']").val();
+
+                $.ajax({
+                    url: '/replies/' + rno,
+                    method: 'delete',
+                    success: function(result) {
+                        console.log("result: " + result);
+                        if(result === 'success') {
+                            alert('댓글이 삭제되었습니다.');
+                            modal.modal('hide');
+                            loadJSONData();
+                        }
+                    }
+                });
+            });
+
+            $(".replyModify").click(function() {
+                var rno = $("input[name='rno']").val();
+
+                var reply = {
+                    rno: rno,
+                    bno: bno,
+                    text: $('input[name="text"]').val(),
+                    replyer: $('input[name="replyer"]').val()
+                }
+
+                console.log(reply);
+
+                $.ajax({
+                    url: '/replies/' + rno,
+                    method: 'put',
+                    data: JSON.stringify(reply),
+                    contentType: 'application/json; charset=utf-8',
+                    success: function(result) {
+                        console.log("RESULT: " + result);
+
+                        if(result === 'success') {
+                            alert("수정되었습니다.");
+                            modal.modal('hide');
+                            loadJSONData();
+                        }
+                    }
+                });
+            });
+        </script>
+    </th:block>
+</th:block>
+</html>
