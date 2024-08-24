@@ -20,154 +20,249 @@
 
         <div class="uploadResult">
             <ul>
-                <li th:each="movieImage: ${dto.imageDTOList}">
-                    <img th:if="${movieImage.path != null}" th:src="|/display/fileName=${movieImage.getThumbnailURL()}|">
+                <li th:each="movieImage: ${dto.imageDTOList}" th:data-file="${movieImage.getThumbnailURL()}">
+                    <img th:if="${movieImage.path != null}" th:src="|/display?fileName=${movieImage.getThumbnailURL()}|">
                 </li>
             </ul>
         </div>
 
-        <button type="button" class="btn btn-primary">
-            Review Count <span class="badge badge-light">[[${dto.reviewCnt}]]</span>
-        </button>
+        <button type="button" class="btn btn-primary">Review Count <span class="badge badge-light">[[${dto.reviewCnt}]]</span></button>
+        <button type="button" class="btn btn-info addReviewBtn">Review Register</button>
+        <div class="list-group reviewList">
+        </div>
+
+        <div class="reviewModal modal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Movie Review</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Reviewer ID</label>
+                            <input class="form-control" name="mid" type="text">
+                        </div>
+                        <div class="form-group">
+                            <label>Grade <span class="grade"></span></label>
+                            <div class="starrr"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Review Text</label>
+                            <input class="form-control" type="text" name="text" placeholder="Good Movie!">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary reviewSaveBtn">Save changes</button>
+                        <button type="button" class="btn btn-warning modifyBtn">Modify</button>
+                        <button type="button" class="btn btn-danger removeBtn">Remove</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="imageModal modal" tabindex="-2">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Picture</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary replyClose" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script th:src="@{/starrr.js}"></script>
+        <link th:href="@{/css/starrr.css}" rel="stylesheet">
+        <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/css/font-awesome.min.css">
+        <style>
+            .uploadResult {
+                width: 100%;
+                background-color: gray;
+                margin-top: 10px;
+            }
+            .uploadResult ul {
+                display: flex;
+                flex-flow: row;
+                justify-content: center;
+                align-items: center;
+                vertical-align: top;
+                overflow: auto;
+            }
+            .uploadResult ul li {
+                list-style: none;
+                padding: 10px;
+                margin-left: 2em;
+            }
+            .uploadResult ul li img {
+                width: 100px;
+            }
+        </style>
 
         <script th:inline="javascript">
             $(document).ready(function(){
-                $(".replyCount").click(function(){
-                    loadJSONData();
+                var grade = 0;
+                var mno = [[${dto.mno}]];
+
+                $('.starrr').starrr({
+                    rating: grade,
+                    change: function(e, value){
+                        if(value) {
+                            console.log(value);
+                            grade = value;
+                        }
+                    }
                 });
-            });
 
-            var bno = [[${dto.bno}]];
-            var listGroup = $(".replyList");
+                var reviewModal = $(".reviewModal");
+                var inputMid = $('input[name="mid"]');
+                var inputText = $('input[name="text"]');
 
-            function formatTime(str) {
-                var date = new Date(str);
+                $(".addReviewBtn").click(function(){
+                    inputMid.val("");
+                    inputText.val("");
 
-                return date.getFullYear() + '/' + (date.getMonth() + 1) + '/' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes();
-            }
+                    $(".removeBtn, .modifyBtn").hide();
+                    $(".reviewSaveBtn").show();
 
-            function loadJSONData() {
+                    reviewModal.modal('show');
+                });
 
-                $.getJSON('/replies/board/'+bno, function(arr){
-                    console.log(arr);
+                var rno;
+                $(".reviewList").on("click", ".card-body", function(){
+                    $(".reviewSaveBtn").hide();
+                    $(".removeBtn, .modifyBtn").show();
 
-                    var str = "";
+                    var targetReview = $(this);
+                    rno = targetReview.data("rno");
+                    console.log("reviewnum: " + rno);
+                    inputMid.val(targetReview.data("mid"));
+                    inputText.val(targetReview.find('.card-title').clone().children().remove().end().text()); // span태그 삭제, 이후(end) children().text()를 가져옴
 
-                    $(".replyCount").html("Reply Count  " + arr.length);
+                    var grade = targetReview.find('.card-title span').html();
+                    $(".starrr a:nth-child("+grade+")").trigger('click');
 
-                    $.each(arr, function(idx, reply){
-                        console.log(reply);
-                        str += '<div class="card-body" data-rno="' + reply.rno + '"><b>' + reply.rno + '</b>';
-                        str += '    <h5 class="card-title">' + reply.text + '</h5>';
-                        str += '    <h6 class="card-subtitle mb-2 text-muted">' + reply.replyer + '<h6>';
-                        str += '    <p class="card-text">' + formatTime(reply.regDate) + '</p>';
-                        str += '</div>';
+                    $(".reviewModal").modal('show');
+                });
+
+                $(".uploadResult li").click(function(){
+                    var file = $(this).data('file');
+
+                    console.log(file);
+
+                    $('.imageModal .modal-body').html("<img style='width:100%' src='/display?fileName=" + file + "&size='1''>");
+
+                    $('.imageModal').modal('show');
+                });
+
+                $(".modifyBtn").on("click", function(){
+                    var data = {
+                        rno: rno,
+                        mno: mno,
+                        grade: grade,
+                        text: inputText.val(),
+                        mid: parseInt(inputMid.val())
+                    };
+
+                    console.log(data);
+
+                    $.ajax({
+                        url: '/reviews/' + mno + "/" + rno,
+                        data: JSON.stringify(data), // json 객체 전송
+                        type: 'PUT',
+                        dataType: 'text',
+                        contentType: "application/json; charset=utf-8",
+                        success: function(result) {
+                            console.log("result: " + result);
+                            self.location.reload(); // url 재호출
+                        }
                     });
 
-                    listGroup.html(str);
+                    reviewModal.modal('hide');
                 });
-            }
 
-            var modal = $('.modal');
+                $(".removeBtn").on("click", function(){
+                    var data = {
+                        rno: rno
+                    };
 
-            $(".addReply").click(function(){
-                modal.modal('show');
+                    console.log(data);
 
-                $('input[name="text"]').val('');
-                $('input[name="replyer"]').val('');
+                    $.ajax({
+                        url: '/reviews/' + mno + "/" + rno,
+                        data: JSON.stringify(data), // json 객체 전송
+                        type: 'DELETE',
+                        dataType: 'text',
+                        contentType: "application/json; charset=utf-8",
+                        success: function(result) {
+                            console.log("result: " + result);
+                            self.location.reload(); // url 재호출
+                        }
+                    });
 
-                $(".modal-footer .btn").hide();
-                $(".replySave, .replyClose").show();
-            });
+                    reviewModal.modal('hide');
+                });
 
-            $(".replySave").click(function() {
-                var reply = {
-                    bno: bno,
-                    text: $('input[name="text"]').val(),
-                    replyer: $('input[name="replyer"]').val()
+                $(".reviewSaveBtn").click(function(){
+                    var data = {
+                        mno: mno,
+                        grade: grade,
+                        text: inputText.val(),
+                        mid: parseInt(inputMid.val()),
+                    };
+
+                    console.log(data);
+
+                    $.ajax({
+                        url: '/reviews/' + mno,
+                        data: JSON.stringify(data), // json 객체 전송
+                        type: 'POST',
+                        dataType: 'text',
+                        contentType: "application/json; charset=utf-8",
+                        success: function(result) {
+                            console.log("result: " + result);
+                            self.location.reload(); // url 재호출
+                        }
+                    });
+
+                    reviewModal.modal('hide');
+                });
+
+                function getMovieReviews() {
+                    function formatTime(str) {
+                        var date = new Date(str);
+
+                        return date.getFullYear() + '/' + (date.getMonth() + 1) + '/' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes();
+                    }
+
+                    $.getJSON("/reviews/"+mno+"/all", function(arr){
+                        var str = "";
+
+                        $.each(arr, function(idx, review){
+                            console.log(review);
+                            str += '<div class="card-body" data-rno=' + review.rno + ' data-mid=' + review.mid + '>';
+                            str += '<h5 class="card-title">' + review.text + ' <span>' + review.grade + '</span></h5>';
+                            str += '<h6 class="card-subtitle mb-2 text-muted">' + review.nickname + '</h6>';
+                            str += '<p class="card-text">' + formatTime(review.regDate) + '</p>';
+                            str += '</div>';
+                        });
+
+                        $(".reviewList").html(str);
+                    });
                 }
 
-                console.log(reply);
-
-                $.ajax({
-                    url: '/replies',
-                    method: 'post',
-                    data: JSON.stringify(reply), // reply 객체를 json 문자열로 바꾸어 전송
-                    contentType: 'application/json; charset=utf-8',
-                    dataType: 'json',
-                    success: function(data) {
-                        console.log(data);
-
-                        var newRno = parseInt(data);
-
-                        alert(newRno + "번 댓글이 등록되었습니다.");
-                        modal.modal('hide');
-                        loadJSONData();
-                    }
-                });
-            });
-
-             $(".replyClose").click(function() {
-                modal.modal('hide');
-            });
-
-            $(".replyList").on('click', '.card-body', function() {
-                var rno = $(this).data("rno"); // data-rno 속성 값 가져오기
-
-                $("input[name='text']").val($(this).find('.card-title').html());
-                $("input[name='replyer']").val($(this).find('.card-subtitle').html());
-                $("input[name='rno']").val(rno);
-
-                $(".modal-footer .btn").hide();
-                $(".replyRemove, .replyModify, .replyClose").show();
-
-                modal.modal('show');
-            });
-
-            $(".replyRemove").on("click", function() {
-                var rno = $("input[name='rno']").val();
-
-                $.ajax({
-                    url: '/replies/' + rno,
-                    method: 'delete',
-                    success: function(result) {
-                        console.log("result: " + result);
-                        if(result === 'success') {
-                            alert('댓글이 삭제되었습니다.');
-                            modal.modal('hide');
-                            loadJSONData();
-                        }
-                    }
-                });
-            });
-
-            $(".replyModify").click(function() {
-                var rno = $("input[name='rno']").val();
-
-                var reply = {
-                    rno: rno,
-                    bno: bno,
-                    text: $('input[name="text"]').val(),
-                    replyer: $('input[name="replyer"]').val()
-                }
-
-                console.log(reply);
-
-                $.ajax({
-                    url: '/replies/' + rno,
-                    method: 'put',
-                    data: JSON.stringify(reply),
-                    contentType: 'application/json; charset=utf-8',
-                    success: function(result) {
-                        console.log("RESULT: " + result);
-
-                        if(result === 'success') {
-                            alert("수정되었습니다.");
-                            modal.modal('hide');
-                            loadJSONData();
-                        }
-                    }
-                });
+                getMovieReviews();
             });
         </script>
     </th:block>
